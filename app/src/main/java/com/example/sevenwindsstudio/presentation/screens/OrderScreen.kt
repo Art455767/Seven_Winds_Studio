@@ -1,3 +1,4 @@
+// OrderScreen.kt
 package com.example.sevenwindsstudio.presentation.screens
 
 import androidx.compose.foundation.layout.*
@@ -13,7 +14,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.sevenwindsstudio.presentation.uistate.MenuItemWithCount
@@ -35,58 +38,130 @@ fun OrderScreen(
                 title = { Text("Ваш заказ") },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(
-                            imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Назад"
-                        )
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Назад")
                     }
                 }
             )
-        }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-        ) {
-            when {
-                state.isLoading -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
-                    }
-                }
+        },
+        bottomBar = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
+                Text("Время ожидания заказа")
+                Text("15 минут!", style = MaterialTheme.typography.h6.copy(fontWeight = FontWeight.Bold))
+                Text("Спасибо, что выбрали нас!")
 
-                paymentResult is PaymentResult.Success -> {
-                    PaymentSuccessScreen {
-                        viewModel.clearOrder()
-                        navController.popBackStack()
-                    }
-                }
+                Spacer(modifier = Modifier.height(16.dp))
 
-                paymentResult is PaymentResult.Error -> {
-                    PaymentErrorScreen(
-                        error = (paymentResult as PaymentResult.Error).message,
-                        onRetry = { viewModel.payOrder() },
-                        onCancel = { navController.popBackStack() }
-                    )
-                }
-
-                else -> {
-                    if (state.items.isEmpty()) {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text("Ваш заказ пуст")
-                        }
-                    } else {
-                        OrderContent(state, viewModel)
-                    }
+                Button(
+                    onClick = { viewModel.payOrder() },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(backgroundColor = MaterialTheme.colors.primary)
+                ) {
+                    Text("Оплатить", fontSize = 18.sp)
                 }
             }
+        }
+    ) { padding ->
+        if (state.items.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("Ваш заказ пуст")
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+            ) {
+                items(state.items) { item ->
+                    OrderItemRow(item)
+                    Divider()
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun OrderContent(
+    state: OrderUiState,
+    viewModel: OrderViewModel
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp)
+    ) {
+        LazyColumn(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items(state.items) { item ->
+                OrderItemRow(item)
+                Divider()
+            }
+        }
+
+        OrderInfoSection(totalPrice = state.totalPrice)
+
+        Button(
+            onClick = { viewModel.payOrder() },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 16.dp),
+            enabled = !state.isLoading
+        ) {
+            Text("Оплатить", fontSize = 18.sp)
+        }
+    }
+}
+
+@Composable
+private fun OrderItemRow(item: MenuItemWithCount) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Column {
+            Text(item.menuItem.name ?: "", style = MaterialTheme.typography.subtitle1)
+            Text("${item.count} × ${item.menuItem.price} руб.",
+                style = MaterialTheme.typography.body2)
+        }
+        Text("${item.menuItem.price * item.count} руб.",
+            style = MaterialTheme.typography.subtitle1)
+    }
+}
+
+@Composable
+private fun OrderInfoSection(totalPrice: Int) {
+    Column(
+        modifier = Modifier.padding(vertical = 16.dp)
+    ) {
+        Divider()
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(
+            text = "Время ожидания заказа \"15 минут! Спасибо, что выбрали нас!\"",
+            style = MaterialTheme.typography.body1
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text("Итого:", style = MaterialTheme.typography.h6)
+            Text("$totalPrice руб.", style = MaterialTheme.typography.h6)
         }
     }
 }
@@ -150,67 +225,5 @@ private fun PaymentErrorScreen(
                 Text("Повторить")
             }
         }
-    }
-}
-
-@Composable
-private fun OrderContent(
-    state: OrderUiState,
-    viewModel: OrderViewModel
-) {
-    Column(modifier = Modifier.fillMaxSize()) {
-        LazyColumn(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            items(state.items) { item ->
-                OrderItemRow(item)
-                Divider(modifier = Modifier.padding(horizontal = 16.dp))
-            }
-        }
-
-        Divider(thickness = 1.dp)
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text("Итого:", style = MaterialTheme.typography.h6)
-            Text("${state.totalPrice} руб.", style = MaterialTheme.typography.h6)
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Button(
-            onClick = { viewModel.payOrder() },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            enabled = !state.isLoading
-        ) {
-            Text("Оплатить")
-        }
-    }
-}
-
-@Composable
-private fun OrderItemRow(item: MenuItemWithCount) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp)
-    ) {
-        Row(
-            horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("${item.menuItem.name} x${item.count}")
-            Text("${item.menuItem.price * item.count} руб.")
-        }
-        Spacer(modifier = Modifier.height(8.dp))
     }
 }

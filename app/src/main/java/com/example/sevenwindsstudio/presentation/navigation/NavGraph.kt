@@ -1,12 +1,17 @@
 package com.example.sevenwindsstudio.presentation.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.sevenwindsstudio.presentation.screens.*
+import com.example.sevenwindsstudio.presentation.uistate.MenuItemWithCount
+import com.example.sevenwindsstudio.presentation.viewmodels.OrderViewModel
 
 @Composable
 fun NavGraph(navController: NavHostController) {
@@ -32,9 +37,23 @@ fun NavGraph(navController: NavHostController) {
             Screen.Menu.route,
             arguments = listOf(navArgument("locationId") { type = NavType.IntType })
         ) { backStackEntry ->
-            MenuScreen(navController, backStackEntry.arguments?.getInt("locationId") ?: 0)
+            val locationId = backStackEntry.arguments?.getInt("locationId") ?: 0
+            MenuScreen(navController, locationId)
         }
 
-        composable(Screen.Order.route) { OrderScreen(navController) }
+        composable(Screen.Order.route) {
+            val orderItems = remember {
+                navController.previousBackStackEntry
+                    ?.savedStateHandle
+                    ?.get<List<MenuItemWithCount>>("orderItems") ?: emptyList()
+            }
+
+            val viewModel = hiltViewModel<OrderViewModel>()
+            LaunchedEffect(orderItems) {
+                viewModel.setOrderItems(orderItems)
+            }
+
+            OrderScreen(navController, viewModel)
+        }
     }
 }

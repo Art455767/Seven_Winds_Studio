@@ -68,9 +68,19 @@ fun MenuScreen(
         topBar = { TopAppBar(title = { Text("Меню кофейни") }) },
         floatingActionButton = {
             ExtendedFloatingActionButton(
-                onClick = { navController.navigate(Screen.Order.route) },
+                onClick = {
+                    val selectedItems = viewModel.getSelectedItems()
+                    if (selectedItems.isNotEmpty()) {
+                        navController.currentBackStackEntry?.savedStateHandle?.set(
+                            "orderItems",
+                            selectedItems
+                        )
+                        navController.navigate(Screen.Order.route)
+                    }
+                },
                 icon = { Icon(Icons.Default.Payment, contentDescription = "Оплатить") },
-                text = { Text("Перейти к оплате") }
+                text = { Text("Перейти к оплате") },
+                backgroundColor = MaterialTheme.colors.primary
             )
         }
     ) { padding ->
@@ -113,10 +123,6 @@ private fun MenuContent(
                 }
             }
         }
-
-        TotalPriceCard(
-            totalPrice = items.sumOf { it.count * it.menuItem.price }
-        )
     }
 }
 
