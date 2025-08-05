@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Seven Winds Studio</string>
+    <string name="nearest_coffee_shops">Ближайшие кофейни</string>
+    <string name="back">Назад</string>
+    <string name="retry">Попробовать снова</string>
+    <string name="authentication_required">Требуется авторизация</string>
+    <string name="login">Войти</string>
+</resources>
