@@ -6,18 +6,15 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Button
 import androidx.compose.material.Card
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.ExtendedFloatingActionButton
@@ -35,27 +32,20 @@ import androidx.compose.material.icons.filled.Remove
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.example.sevenwindsstudio.presentation.menu.MenuItemCard
+import coil.compose.AsyncImage
 import com.example.sevenwindsstudio.presentation.navigation.Screen
 import com.example.sevenwindsstudio.presentation.uistate.MenuItemWithCount
 import com.example.sevenwindsstudio.presentation.viewmodels.MenuViewModel
-import androidx.compose.material.*
-import coil.compose.AsyncImage
-
 
 @Composable
 fun MenuScreen(
@@ -78,8 +68,8 @@ fun MenuScreen(
         topBar = { TopAppBar(title = { Text("Меню кофейни") }) },
         floatingActionButton = {
             ExtendedFloatingActionButton(
-                onClick = { navController.navigate("order") },
-                icon = { Icon(Icons.Default.Payment, "Оплатить") },
+                onClick = { navController.navigate(Screen.Order.route) },
+                icon = { Icon(Icons.Default.Payment, contentDescription = "Оплатить") },
                 text = { Text("Перейти к оплате") }
             )
         }
@@ -105,25 +95,33 @@ private fun MenuContent(
     ) {
         LazyVerticalGrid(
             columns = GridCells.Fixed(2),
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
+            contentPadding = PaddingValues(8.dp)
         ) {
             items(items) { item ->
-                MenuItemCard(
-                    item = item,
-                    onAdd = { viewModel.incrementCount(item.menuItem.id) },
-                    onRemove = { viewModel.decrementCount(item.menuItem.id) }
-                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(1f)
+                        .padding(8.dp)
+                ) {
+                    MenuItemCard(
+                        item = item,
+                        onAdd = { viewModel.incrementCount(item.menuItem.id) },
+                        onRemove = { viewModel.decrementCount(item.menuItem.id) }
+                    )
+                }
             }
         }
 
         TotalPriceCard(
-            totalPrice = items.sumOf { it.count * 200 }
+            totalPrice = items.sumOf { it.count * it.menuItem.price }
         )
     }
 }
 
 @Composable
-private fun MenuItemCard(
+fun MenuItemCard(
     item: MenuItemWithCount,
     onAdd: () -> Unit,
     onRemove: () -> Unit
@@ -131,9 +129,7 @@ private fun MenuItemCard(
     Card(
         elevation = 4.dp,
         shape = RoundedCornerShape(16.dp),
-        modifier = Modifier
-            .padding(8.dp)
-            .aspectRatio(0.9f)
+        modifier = Modifier.fillMaxSize()
     ) {
         Column(
             modifier = Modifier
@@ -142,30 +138,29 @@ private fun MenuItemCard(
             verticalArrangement = Arrangement.SpaceBetween,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-//            AsyncImage(
-//                model = item.menuItem.imageUrl ?: R.drawable.ic_coffee_placeholder,
-//                contentDescription = item.menuItem.name,
-//                contentScale = ContentScale.Crop,
-//                modifier = Modifier
-//                    .fillMaxWidth()
-//                    .aspectRatio(1f)
-//                    .clip(RoundedCornerShape(12.dp))
-//            )
-            // Безопасное отображение контента
             Box(
                 modifier = Modifier
+                    .weight(1f)
                     .fillMaxWidth()
-                    .aspectRatio(1f)
                     .clip(RoundedCornerShape(12.dp))
                     .background(MaterialTheme.colors.secondary.copy(alpha = 0.1f)),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = Icons.Default.LocalCafe,
-                    contentDescription = item.menuItem.name,
-                    tint = MaterialTheme.colors.primary,
-                    modifier = Modifier.size(48.dp)
-                )
+                if (item.menuItem.imageUrl != null) {
+                    AsyncImage(
+                        model = item.menuItem.imageUrl,
+                        contentDescription = item.menuItem.name,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.LocalCafe,
+                        contentDescription = item.menuItem.name,
+                        tint = MaterialTheme.colors.primary,
+                        modifier = Modifier.size(48.dp)
+                    )
+                }
             }
 
             Text(
@@ -177,22 +172,27 @@ private fun MenuItemCard(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(modifier = Modifier.height(4.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "${item.menuItem.price} руб.",
+                    style = MaterialTheme.typography.subtitle2,
+                    color = MaterialTheme.colors.primary
+                )
 
-            Text(
-                text = "${item.menuItem.price ?: 0} руб.",
-                style = MaterialTheme.typography.subtitle2,
-                color = MaterialTheme.colors.primary
-            )
-
-            Counter(
-                count = item.count,
-                onAdd = onAdd,
-                onRemove = onRemove
-            )
+                Counter(
+                    count = item.count,
+                    onAdd = onAdd,
+                    onRemove = onRemove
+                )
+            }
         }
     }
 }
+
 @Composable
 private fun Counter(
     count: Int,
@@ -201,8 +201,7 @@ private fun Counter(
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceEvenly,
-        modifier = Modifier.fillMaxWidth()
+        horizontalArrangement = Arrangement.End
     ) {
         IconButton(
             onClick = onRemove,
@@ -211,7 +210,11 @@ private fun Counter(
             Icon(Icons.Default.Remove, "Уменьшить", tint = MaterialTheme.colors.primary)
         }
 
-        Text(count.toString(), style = MaterialTheme.typography.h6)
+        Text(
+            text = count.toString(),
+            style = MaterialTheme.typography.h6,
+            modifier = Modifier.padding(horizontal = 4.dp)
+        )
 
         IconButton(
             onClick = onAdd,
@@ -270,5 +273,3 @@ private fun ErrorScreen(message: String, padding: PaddingValues) {
         Text(message, color = MaterialTheme.colors.error)
     }
 }
-
-

@@ -101,6 +101,4 @@ dependencies {
     implementation (libs.androidx.datastore.preferences)
 
     implementation (libs.maps.mobile.v451full)
-
-
 }
