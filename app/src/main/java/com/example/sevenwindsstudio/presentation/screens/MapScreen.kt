@@ -41,12 +41,15 @@ fun MapScreen(
     val state by viewModel.uiState.collectAsState()
     var userLocation by remember { mutableStateOf<Point?>(null) }
 
+    val placemarkTapListeners = remember { mutableSetOf<MapObjectTapListener>() }
+
     DisposableEffect(Unit) {
         MapKitFactory.initialize(context)
         mapView.onStart()
         MapKitFactory.getInstance().onStart()
 
         onDispose {
+            placemarkTapListeners.clear()
             mapView.onStop()
             MapKitFactory.getInstance().onStop()
         }
@@ -68,19 +71,19 @@ fun MapScreen(
         }
     }
 
-    val placemarkTapListener = MapObjectTapListener { _, _ ->
-        true
-    }
     LaunchedEffect(state.locations, selectedLocationId, userLocation) {
         val map = mapView.map
         val collection = map.mapObjects.addCollection()
+
         collection.clear()
+        placemarkTapListeners.clear()
 
         state.locations.forEach { locationItem ->
             val point = Point(
                 locationItem.location.latitude,
                 locationItem.location.longitude
             )
+
             val distanceText = userLocation?.let { userPoint ->
                 val distance = calculateDistance(
                     userPoint.latitude,
@@ -101,27 +104,34 @@ fun MapScreen(
                         placement = com.yandex.mapkit.map.TextStyle.Placement.BOTTOM
                     }
                 )
-                userData = locationItem.location.id // Сохраняем ID для навигации
+                userData = locationItem.location.id
             }
 
-            placemark.addTapListener { mapObject, _ ->
+            val tapListener = MapObjectTapListener { mapObject, _ ->
                 (mapObject.userData as? Int)?.let { locationId ->
                     navController.navigate(Screen.Menu.createRoute(locationId))
                 }
                 true
             }
+
+            placemark.addTapListener(tapListener)
+            placemarkTapListeners.add(tapListener)
         }
 
         val targetPoint = selectedLocationId?.let { id ->
             state.locations.find { it.location.id == id }?.let { location ->
                 Point(location.location.latitude, location.location.longitude)
             }
-        } ?: userLocation ?: Point(55.751574, 37.573856) // Москва по умолчанию
+        } ?: userLocation ?: Point(55.751574, 37.573856)
 
         map.move(
             CameraPosition(
                 targetPoint,
-                if (selectedLocationId != null) 15f else if (userLocation != null) 13f else 11f,
+                when {
+                    selectedLocationId != null -> 15f
+                    userLocation != null -> 13f
+                    else -> 11f
+                },
                 0f,
                 0f
             )
