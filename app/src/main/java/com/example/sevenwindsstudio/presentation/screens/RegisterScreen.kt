@@ -1,31 +1,45 @@
 package com.example.sevenwindsstudio.presentation.screens
 
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.Button
+import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.CircularProgressIndicator
+import androidx.compose.material.Divider
+import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedTextField
+import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
+import androidx.compose.material.TextFieldDefaults
+import androidx.compose.material.TopAppBar
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.example.sevenwindsstudio.AppTheme
 import com.example.sevenwindsstudio.presentation.navigation.Screen
 import com.example.sevenwindsstudio.presentation.viewmodels.RegisterViewModel
 
@@ -44,68 +58,191 @@ fun RegisterScreen(
         }
     }
 
-    val errorMsg = uiState.errorMessage
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(text = "Регистрация", style = MaterialTheme.typography.h5)
-        Spacer(Modifier.height(16.dp))
-        OutlinedTextField(
-            value = uiState.login,
-            onValueChange = viewModel::onLoginChanged,
-            label = { Text("E-mail") },
-            modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(Modifier.height(8.dp))
-        OutlinedTextField(
-            value = uiState.password,
-            onValueChange = viewModel::onPasswordChanged,
-            label = { Text("Пароль") },
-            visualTransformation = PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-            modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(Modifier.height(8.dp))
-        OutlinedTextField(
-            value = uiState.confirmPassword,
-            onValueChange = viewModel::onConfirmPasswordChanged,
-            label = { Text("Повторите Пароль") },
-            visualTransformation = PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-            modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(Modifier.height(16.dp))
-        if (!errorMsg.isNullOrEmpty()) {
-            Text(errorMsg, color = MaterialTheme.colors.error)
-            Spacer(Modifier.height(8.dp))
-        }
-        Button(
-            onClick = { viewModel.register() },
-            modifier = Modifier.fillMaxWidth(),
-            enabled = !uiState.isLoading
-        ) {
-            if (uiState.isLoading) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(24.dp),
-                    strokeWidth = 2.dp,
-                    color = MaterialTheme.colors.onPrimary
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        text = "Регистрация",
+                        style = MaterialTheme.typography.h6.copy(
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp,
+                            letterSpacing = (-0.12).sp,
+                            color = AppTheme.Primary
+                        ),
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.Center
+                    )
+                },
+                backgroundColor = AppTheme.Background,
+                elevation = 0.dp
+            )
+        },
+        content = { padding ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(AppTheme.Background)
+                    .padding(padding)
+            ) {
+                Divider(
+                    color = AppTheme.Divider,
+                    thickness = 0.5.dp,
+                    modifier = Modifier.fillMaxWidth()
                 )
-            } else {
-                Text("Регистрация")
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 18.dp)
+                        .padding(top = 72.dp)
+                ) {
+                    OutlinedTextField(
+                        value = uiState.login,
+                        onValueChange = viewModel::onLoginChanged,
+                        label = { Text("E-mail") },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Email,
+                                contentDescription = "Email",
+                                tint = AppTheme.Medium
+                            )
+                        },
+                        modifier = Modifier
+                            .width(339.dp)
+                            .height(73.dp)
+                            .padding(bottom = 16.dp),
+                        shape = RoundedCornerShape(24.5.dp),
+                        colors = TextFieldDefaults.outlinedTextFieldColors(
+                            focusedBorderColor = AppTheme.Primary,
+                            unfocusedBorderColor = AppTheme.Medium,
+                            textColor = AppTheme.Primary,
+                            cursorColor = AppTheme.Primary
+                        ),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+                    )
+
+                    OutlinedTextField(
+                        value = uiState.password,
+                        onValueChange = viewModel::onPasswordChanged,
+                        label = { Text("Пароль") },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Lock,
+                                contentDescription = "Пароль",
+                                tint = AppTheme.Medium
+                            )
+                        },
+                        visualTransformation = PasswordVisualTransformation(),
+                        modifier = Modifier
+                            .width(339.dp)
+                            .height(73.dp)
+                            .padding(bottom = 16.dp),
+                        shape = RoundedCornerShape(24.5.dp),
+                        colors = TextFieldDefaults.outlinedTextFieldColors(
+                            focusedBorderColor = AppTheme.Primary,
+                            unfocusedBorderColor = AppTheme.Medium,
+                            textColor = AppTheme.Primary,
+                            cursorColor = AppTheme.Primary
+                        ),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
+                    )
+
+                    OutlinedTextField(
+                        value = uiState.confirmPassword,
+                        onValueChange = viewModel::onConfirmPasswordChanged,
+                        label = { Text("Подтвердите пароль") },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Lock,
+                                contentDescription = "Подтверждение пароля",
+                                tint = AppTheme.Medium
+                            )
+                        },
+                        visualTransformation = PasswordVisualTransformation(),
+                        modifier = Modifier
+                            .width(339.dp)
+                            .height(73.dp)
+                            .padding(bottom = 24.dp),
+                        shape = RoundedCornerShape(24.5.dp),
+                        colors = TextFieldDefaults.outlinedTextFieldColors(
+                            focusedBorderColor = AppTheme.Primary,
+                            unfocusedBorderColor = AppTheme.Medium,
+                            textColor = AppTheme.Primary,
+                            cursorColor = AppTheme.Primary
+                        ),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
+                    )
+
+                    if (!uiState.errorMessage.isNullOrEmpty()) {
+                        Text(
+                            text = uiState.errorMessage!!,
+                            color = AppTheme.Error,
+                            style = MaterialTheme.typography.body2,
+                            modifier = Modifier
+                                .width(339.dp)
+                                .padding(bottom = 16.dp),
+                            textAlign = TextAlign.Center
+                        )
+                    }
+
+                    Button(
+                        onClick = { viewModel.register() },
+                        modifier = Modifier
+                            .width(338.dp)
+                            .height(48.dp),
+                        shape = RoundedCornerShape(24.5.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            backgroundColor = AppTheme.Dark,
+                            disabledBackgroundColor = AppTheme.Dark.copy(alpha = 0.5f),
+                            contentColor = AppTheme.Light
+                        ),
+                        enabled = !uiState.isLoading,
+                        elevation = ButtonDefaults.elevation(
+                            defaultElevation = 2.dp,
+                            pressedElevation = 4.dp
+                        )
+                    ) {
+                        if (uiState.isLoading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                strokeWidth = 2.dp,
+                                color = AppTheme.Light
+                            )
+                        } else {
+                            Text(
+                                text = "Регистрация",
+                                style = MaterialTheme.typography.button.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 18.sp,
+                                    letterSpacing = (-0.14).sp,
+                                    color = AppTheme.Light
+                                )
+                            )
+                        }
+                    }
+
+                    TextButton(
+                        onClick = {
+                            navController.navigate(Screen.Login.route) {
+                                popUpTo(Screen.Register.route) { inclusive = true }
+                            }
+                        },
+                        modifier = Modifier
+                            .width(339.dp)
+                            .padding(top = 16.dp)
+                    ) {
+                        Text(
+                            text = "Уже есть аккаунт? Войти",
+                            style = MaterialTheme.typography.body2,
+                            color = AppTheme.Primary
+                        )
+                    }
+                }
             }
         }
-        Spacer(Modifier.height(16.dp))
-        TextButton(onClick = {
-            navController.navigate(Screen.Login.route) {
-                popUpTo(Screen.Register.route) { inclusive = true }
-            }
-        }) {
-            Text("Уже есть аккаунт? Войти")
-        }
-    }
+    )
 }
