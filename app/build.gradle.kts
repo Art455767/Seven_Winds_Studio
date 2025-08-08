@@ -63,6 +63,7 @@ dependencies {
     implementation (libs.androidx.material.icons.extended)
     implementation(libs.volley)
     implementation (libs.firebase.perf.ktx)
+    implementation(libs.androidx.media3.common.ktx)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
