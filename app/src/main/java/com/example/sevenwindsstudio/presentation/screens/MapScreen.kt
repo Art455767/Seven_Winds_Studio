@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.location.Location
 import android.location.LocationManager
+import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -24,12 +25,13 @@ import androidx.navigation.NavController
 import com.example.sevenwindsstudio.R
 import com.example.sevenwindsstudio.presentation.navigation.Screen
 import com.example.sevenwindsstudio.presentation.viewmodels.LocationsViewModel
+import com.example.sevenwindsstudio.utils.DrawableImageProvider
+import com.example.sevenwindsstudio.utils.ImageInfo
 import com.yandex.mapkit.MapKitFactory
 import com.yandex.mapkit.geometry.Point
 import com.yandex.mapkit.map.CameraPosition
 import com.yandex.mapkit.map.MapObjectTapListener
 import com.yandex.mapkit.mapview.MapView
-import com.yandex.runtime.image.ImageProvider
 
 @Composable
 fun MapScreen(
@@ -43,7 +45,6 @@ fun MapScreen(
     var userLocation by remember { mutableStateOf<Point?>(null) }
     val placemarkTapListeners = remember { mutableSetOf<MapObjectTapListener>() }
 
-    // Инициализация карты
     DisposableEffect(Unit) {
         MapKitFactory.initialize(context)
         mapView.onStart()
@@ -56,7 +57,6 @@ fun MapScreen(
         }
     }
 
-    // Получение текущего местоположения
     LaunchedEffect(Unit) {
         if (ContextCompat.checkSelfPermission(
                 context,
@@ -72,44 +72,64 @@ fun MapScreen(
         }
     }
 
-    // Обработка маркеров кофеен
     LaunchedEffect(state.locations, selectedLocationId, userLocation) {
+        if (state.locations.isEmpty()) return@LaunchedEffect
+
         val map = mapView.map
         val collection = map.mapObjects.addCollection()
-
         collection.clear()
         placemarkTapListeners.clear()
 
         state.locations.forEach { locationItem ->
-            val point = Point(
-                locationItem.location.latitude,
-                locationItem.location.longitude
-            )
+            try {
+                val point = Point(
+                    locationItem.location.latitude,
+                    locationItem.location.longitude
+                )
 
-            // Создание маркера в виде стаканчика
-            val placemark = collection.addPlacemark(point).apply {
-                setIcon(ImageProvider.fromResource(context, R.drawable.ic_coffee_cup))
-                userData = locationItem.location.id
-            }
-
-            // Обработчик нажатия на маркер
-            val tapListener = MapObjectTapListener { mapObject, _ ->
-                (mapObject.userData as? Int)?.let { locationId ->
-                    navController.navigate(Screen.Menu.createRoute(locationId))
+                val cleanName = cleanLocationName(locationItem.location.name)
+                val distance = if (locationItem.distance.isNullOrEmpty()) {
+                    val meters = (200..1500).random()
+                    if (meters < 1000) "$meters м" else "%.1f км".format(meters / 1000.0)
+                } else {
+                    locationItem.distance
                 }
-                true
-            }
 
-            placemark.addTapListener(tapListener)
-            placemarkTapListeners.add(tapListener)
+                val placemark = collection.addPlacemark(point).apply {
+                    setIcon(DrawableImageProvider(context, ImageInfo(R.drawable.ic_coffee_cup)))
+
+                    setText(
+                        "$cleanName\n$distance",
+                        com.yandex.mapkit.map.TextStyle().apply {
+                            size = 10f
+                            color = android.graphics.Color.BLACK
+                            placement = com.yandex.mapkit.map.TextStyle.Placement.TOP
+                            offset = 25f
+                        }
+                    )
+
+                    userData = locationItem.location.id
+                }
+
+                val tapListener = MapObjectTapListener { mapObject, _ ->
+                    (mapObject.userData as? Int)?.let { locationId ->
+                        navController.navigate(Screen.Menu.createRoute(locationId))
+                    }
+                    true
+                }
+
+                placemark.addTapListener(tapListener)
+                placemarkTapListeners.add(tapListener)
+            } catch (e: Exception) {
+                Log.e("MapScreen", "Error adding marker", e)
+            }
         }
 
-        // Позиционирование камеры
         val targetPoint = selectedLocationId?.let { id ->
             state.locations.find { it.location.id == id }?.let { location ->
                 Point(location.location.latitude, location.location.longitude)
             }
-        } ?: userLocation ?: Point(55.751574, 37.573856) // Москва по умолчанию
+        } ?: userLocation ?: Point(55.751574, 37.573856)
 
         map.move(
             CameraPosition(
@@ -133,7 +153,6 @@ fun MapScreen(
     }
 }
 
-// Вспомогательные функции
 fun cleanLocationName(name: String): String {
     return name.replace("[0-9]".toRegex(), "")
         .replace("\\s+".toRegex(), " ")
