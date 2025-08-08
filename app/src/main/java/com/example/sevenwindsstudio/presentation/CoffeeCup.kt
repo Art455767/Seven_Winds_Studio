@@ -19,76 +19,46 @@ fun CoffeeCup(
     borderWidth: Dp = 2.dp
 ) {
     Canvas(
-        modifier = modifier.size(58.dp)
+        modifier = modifier.size(48.dp) // Уменьшил размер для маркеров на карте
     ) {
-        // Основной круг (дно стакана)
+        val centerX = size.width / 2
+        val centerY = size.height / 2
+        val radius = size.minDimension / 2.5f // Уменьшенный радиус для маркера
+
+        // Упрощенная версия стаканчика для маркера
+        // Основание (круг)
         drawCircle(
             color = cupColor,
-            radius = size.minDimension / 2,
-            center = Offset(size.width / 2, size.height / 2)
+            radius = radius,
+            center = Offset(centerX, centerY)
         )
 
-        // Тень под стаканом
-        drawCircle(
-            color = Color.Black.copy(alpha = 0.25f),
-            radius = size.minDimension / 2,
-            center = Offset(size.width / 2, size.height / 2 + 4f)
-        )
-
-        // Верхняя часть стакана (прямоугольник)
+        // Корпус стакана (трапеция)
+        val cupWidth = radius * 1.6f
+        val cupHeight = radius * 1.2f
         drawRect(
             color = cupColor,
-            topLeft = Offset(66.5f.toDp().toPx() - 45f.toDp().toPx(), 269.25f.toDp().toPx() - 249f.toDp().toPx()),
-            size = androidx.compose.ui.geometry.Size(15f.toDp().toPx(), 3.75f.toDp().toPx())
+            topLeft = Offset(centerX - cupWidth/2, centerY - cupHeight),
+            size = androidx.compose.ui.geometry.Size(cupWidth, cupHeight)
         )
 
-        // Средняя часть стакана (прямоугольник)
-        drawRect(
-            color = cupColor,
-            topLeft = Offset(65.25f.toDp().toPx() - 45f.toDp().toPx(), 273f.toDp().toPx() - 249f.toDp().toPx()),
-            size = androidx.compose.ui.geometry.Size(17.5f.toDp().toPx(), 3.75f.toDp().toPx())
-        )
-
-        // Основная часть стакана (прямоугольник)
-        drawRect(
-            color = cupColor,
-            topLeft = Offset(67.13f.toDp().toPx() - 45f.toDp().toPx(), 276.75f.toDp().toPx() - 249f.toDp().toPx()),
-            size = androidx.compose.ui.geometry.Size(13.75f.toDp().toPx(), 12.5f.toDp().toPx())
-        )
-
-        // Обводки для всех элементов
+        // Обводка
         val strokeWidth = borderWidth.toPx()
         val strokeStyle = Stroke(width = strokeWidth, cap = StrokeCap.Round)
 
-        // Обводка верхней части
-        drawRect(
-            color = borderColor,
-            topLeft = Offset(66.5f.toDp().toPx() - 45f.toDp().toPx(), 269.25f.toDp().toPx() - 249f.toDp().toPx()),
-            size = androidx.compose.ui.geometry.Size(15f.toDp().toPx(), 3.75f.toDp().toPx()),
-            style = strokeStyle
-        )
-
-        // Обводка средней части
-        drawRect(
-            color = borderColor,
-            topLeft = Offset(65.25f.toDp().toPx() - 45f.toDp().toPx(), 273f.toDp().toPx() - 249f.toDp().toPx()),
-            size = androidx.compose.ui.geometry.Size(17.5f.toDp().toPx(), 3.75f.toDp().toPx()),
-            style = strokeStyle
-        )
-
-        // Обводка основной части
-        drawRect(
-            color = borderColor,
-            topLeft = Offset(67.13f.toDp().toPx() - 45f.toDp().toPx(), 276.75f.toDp().toPx() - 249f.toDp().toPx()),
-            size = androidx.compose.ui.geometry.Size(13.75f.toDp().toPx(), 12.5f.toDp().toPx()),
-            style = strokeStyle
-        )
-
-        // Обводка круга (дна)
+        // Обводка основания
         drawCircle(
             color = borderColor,
-            radius = size.minDimension / 2 - strokeWidth / 2,
-            center = Offset(size.width / 2, size.height / 2),
+            radius = radius - strokeWidth/2,
+            center = Offset(centerX, centerY),
+            style = strokeStyle
+        )
+
+        // Обводка корпуса
+        drawRect(
+            color = borderColor,
+            topLeft = Offset(centerX - cupWidth/2, centerY - cupHeight),
+            size = androidx.compose.ui.geometry.Size(cupWidth, cupHeight),
             style = strokeStyle
         )
     }

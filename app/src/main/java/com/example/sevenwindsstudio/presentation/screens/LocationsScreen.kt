@@ -64,11 +64,18 @@ fun LocationsScreen(
                 }
             )
         },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = { navController.navigate(Screen.Map.route) }
+        bottomBar = {
+            Button(
+                onClick = { navController.navigate(Screen.Map.route) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                colors = ButtonDefaults.buttonColors(
+                    backgroundColor = MaterialTheme.colors.primary,
+                    contentColor = MaterialTheme.colors.onPrimary
+                )
             ) {
-                Icon(Icons.Default.Map, "Карта")
+                Text("На карте", style = MaterialTheme.typography.button)
             }
         }
     ) { innerPadding ->
@@ -77,63 +84,42 @@ fun LocationsScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-
             when {
                 state.isLoading -> LoadingState()
                 state.error != null -> ErrorState(state.error!!) { viewModel.loadLocations() }
-                else -> CoffeeShopsList(
-                    locations = coffeeShops,
-                    onItemClick = { id ->
-                        navController.navigate(Screen.MapWithSelectedLocation.createRoute(id))
-                    }
-                )
+                else -> CoffeeShopsList(locations = coffeeShops)
             }
         }
     }
 }
 
 @Composable
-private fun CoffeeShopsList(
-    locations: List<LocationItem>,
-    onItemClick: (Int) -> Unit
-) {
+private fun CoffeeShopsList(locations: List<LocationItem>) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(bottom = 16.dp),
+        contentPadding = PaddingValues(bottom = 80.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         items(locations) { location ->
             CoffeeShopCard(
                 name = location.location.name,
-                distance = location.distance,
-                onClick = { onItemClick(location.location.id) }
+                distance = location.distance
             )
         }
     }
 }
 
 @Composable
-private fun CoffeeShopCard(
-    name: String,
-    distance: String?,
-    onClick: () -> Unit
-) {
+private fun CoffeeShopCard(name: String, distance: String?) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 8.dp),
         elevation = 4.dp,
         backgroundColor = MaterialTheme.colors.surface
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
-            Text(
-                text = name,
-                style = MaterialTheme.typography.h6
-            )
-
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(text = name, style = MaterialTheme.typography.h6)
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = "$distance от вас",
@@ -142,12 +128,6 @@ private fun CoffeeShopCard(
             )
         }
     }
-}
-
-private fun cleanLocationName(name: String): String {
-    return name.replace("[0-9]".toRegex(), "")
-        .replace("\\s+".toRegex(), " ")
-        .trim()
 }
 
 @Composable
@@ -161,10 +141,7 @@ private fun LoadingState() {
 }
 
 @Composable
-private fun ErrorState(
-    error: String,
-    onRetry: () -> Unit
-) {
+private fun ErrorState(error: String, onRetry: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
